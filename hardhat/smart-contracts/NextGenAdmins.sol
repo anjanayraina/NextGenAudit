@@ -28,6 +28,7 @@ contract NextGenAdmins is Ownable{
     }
 
     // certain functions can only be called by an admin
+    // @audit solidity naming convenction not followed while naming this modifier . Refrence : https://docs.soliditylang.org/en/latest/style-guide.html#modifier-names
     modifier AdminRequired {
       require((adminPermissions[msg.sender] == true) || (_msgSender()== owner()), "Not allowed");
       _;
@@ -79,7 +80,7 @@ contract NextGenAdmins is Ownable{
     }
 
     // get admin contract status
-
+    // @audit this loooks really sus , see where this function is used and try to exploit it 
     function isAdminContract() external view returns (bool) {
         return true;
     }

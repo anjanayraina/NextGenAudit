@@ -7,7 +7,7 @@
  *  @version: 10.28
  *  @author: 6529 team
  */
-
+// @audit The admin contract is NextGenAdmins.sol
 pragma solidity ^0.8.19;
 
 import "./ERC721Enumerable.sol";
@@ -23,7 +23,7 @@ contract NextGenCore is ERC721Enumerable, Ownable, ERC2981 {
     using Strings for uint256;
 
     // declare variables
-    uint256 public newCollectionIndex;
+    uint256 public newCollectionIndex; // @audit GO make the newCollectionIndex 1 here so that we dont have to assign it again in the constructor 
 
     // collectionInfo struct declaration
     struct collectionInfoStructure {
@@ -112,21 +112,20 @@ contract NextGenCore is ERC721Enumerable, Ownable, ERC2981 {
     }
 
     // certain functions can only be called by a global or function admin
-
+    // @audit GO the condition doesnt need to be checked by == true , you can just add them in the statements 
     modifier FunctionAdminRequired(bytes4 _selector) {
       require(adminsContract.retrieveFunctionAdmin(msg.sender, _selector) == true || adminsContract.retrieveGlobalAdmin(msg.sender) == true , "Not allowed");
       _;
     }
 
     // certain functions can only be called by a collection, global or function admin
-
     modifier CollectionAdminRequired(uint256 _collectionID, bytes4 _selector) {
       require(adminsContract.retrieveCollectionAdmin(msg.sender,_collectionID) == true || adminsContract.retrieveFunctionAdmin(msg.sender, _selector) == true || adminsContract.retrieveGlobalAdmin(msg.sender) == true, "Not allowed");
       _;
     }
 
     // function to create a Collection
-
+    // @audit NC return the created collectionID so that the person can know what their id is 
     function createCollection(string memory _collectionName, string memory _collectionArtist, string memory _collectionDescription, string memory _collectionWebsite, string memory _collectionLicense, string memory _collectionBaseURI, string memory _collectionLibrary, string[] memory _collectionScript) public FunctionAdminRequired(this.createCollection.selector) {
         collectionInfo[newCollectionIndex].collectionName = _collectionName;
         collectionInfo[newCollectionIndex].collectionArtist = _collectionArtist;
@@ -137,15 +136,14 @@ contract NextGenCore is ERC721Enumerable, Ownable, ERC2981 {
         collectionInfo[newCollectionIndex].collectionLibrary = _collectionLibrary;
         collectionInfo[newCollectionIndex].collectionScript = _collectionScript;
         isCollectionCreated[newCollectionIndex] = true;
-        newCollectionIndex = newCollectionIndex + 1;
+        newCollectionIndex = newCollectionIndex + 1; // @audit use +=1 , its cheaper
     }
 
     // function to add/modify the additional data of a collection
     // once a collection is created and total supply is set it cannot be changed
     // only _collectionArtistAddress , _maxCollectionPurchases can change after total supply is set
-
     function setCollectionData(uint256 _collectionID, address _collectionArtistAddress, uint256 _maxCollectionPurchases, uint256 _collectionTotalSupply, uint _setFinalSupplyTimeAfterMint) public CollectionAdminRequired(_collectionID, this.setCollectionData.selector) {
-        require((isCollectionCreated[_collectionID] == true) && (collectionFreeze[_collectionID] == false) && (_collectionTotalSupply <= 10000000000), "err/freezed");
+        require((isCollectionCreated[_collectionID] == true) && (collectionFreeze[_collectionID] == false) && (_collectionTotalSupply <= 10000000000), "err/freezed"); // @audit NC split these into multiple require as they have the same revert that doesnt cater to the other conditions 
         if (collectionAdditionalData[_collectionID].collectionTotalSupply == 0) {
             collectionAdditionalData[_collectionID].collectionArtistAddress = _collectionArtistAddress;
             collectionAdditionalData[_collectionID].maxCollectionPurchases = _maxCollectionPurchases;
@@ -234,7 +232,8 @@ contract NextGenCore is ERC721Enumerable, Ownable, ERC2981 {
     // Additional setter functions
 
     // function to update Collection Info
-
+    // @audit Low Risk where is this checked 
+    /**If index is equal to a value that is within the indices range of the collectionScript the function updates that single part of the script. */
     function updateCollectionInfo(uint256 _collectionID, string memory _newCollectionName, string memory _newCollectionArtist, string memory _newCollectionDescription, string memory _newCollectionWebsite, string memory _newCollectionLicense, string memory _newCollectionBaseURI, string memory _newCollectionLibrary, uint256 _index, string[] memory _newCollectionScript) public CollectionAdminRequired(_collectionID, this.updateCollectionInfo.selector) {
         require((isCollectionCreated[_collectionID] == true) && (collectionFreeze[_collectionID] == false), "Not allowed");
          if (_index == 1000) {
@@ -295,7 +294,7 @@ contract NextGenCore is ERC721Enumerable, Ownable, ERC2981 {
     }
 
     // set tokenHash
-
+    // @audit Med how is the condition that this can only be called by the randimizor contract enforced ??
     function setTokenHash(uint256 _collectionID, uint256 _mintIndex, bytes32 _hash) external {
         require(msg.sender == collectionAdditionalData[_collectionID].randomizerContract);
         require(tokenToHash[_mintIndex] == 0x0000000000000000000000000000000000000000000000000000000000000000);
@@ -334,11 +333,12 @@ contract NextGenCore is ERC721Enumerable, Ownable, ERC2981 {
 
     // function to override supportInterface
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721Enumerable, ERC2981) returns (bool) { 
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721Enumerable, ERC2981) returns (bool) { f
         return super.supportsInterface(interfaceId); 
     }
 
     // function to return the tokenURI
+    //@audit read only reentrancy possible here, see how one can exploit this 
 
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         _requireMinted(tokenId);
