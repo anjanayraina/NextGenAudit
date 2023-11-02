@@ -301,7 +301,7 @@ contract NextGenCore is ERC721Enumerable, Ownable, ERC2981 {
     // @audit Med how is the condition that this can only be called by the randimizor contract enforced ??
     function setTokenHash(uint256 _collectionID, uint256 _mintIndex, bytes32 _hash) external {
         require(msg.sender == collectionAdditionalData[_collectionID].randomizerContract);
-        require(tokenToHash[_mintIndex] == 0x0000000000000000000000000000000000000000000000000000000000000000);
+        require(tokenToHash[_mintIndex] == 0x0000000000000000000000000000000000000000000000000000000000000000); // @audit GO use assmebly for null address checks 
         tokenToHash[_mintIndex] = _hash;
     }
 
