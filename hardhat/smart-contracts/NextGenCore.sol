@@ -127,6 +127,7 @@ contract NextGenCore is ERC721Enumerable, Ownable, ERC2981 {
     // function to create a Collection
     // @audit NC return the created collectionID so that the person can know what their id is 
     function createCollection(string memory _collectionName, string memory _collectionArtist, string memory _collectionDescription, string memory _collectionWebsite, string memory _collectionLicense, string memory _collectionBaseURI, string memory _collectionLibrary, string[] memory _collectionScript) public FunctionAdminRequired(this.createCollection.selector) {
+        // @audit GO instead of ascessing the mapping everytime , save the storage in a variable and make changes there  
         collectionInfo[newCollectionIndex].collectionName = _collectionName;
         collectionInfo[newCollectionIndex].collectionArtist = _collectionArtist;
         collectionInfo[newCollectionIndex].collectionDescription = _collectionDescription;
@@ -136,12 +137,13 @@ contract NextGenCore is ERC721Enumerable, Ownable, ERC2981 {
         collectionInfo[newCollectionIndex].collectionLibrary = _collectionLibrary;
         collectionInfo[newCollectionIndex].collectionScript = _collectionScript;
         isCollectionCreated[newCollectionIndex] = true;
-        newCollectionIndex = newCollectionIndex + 1; // @audit use +=1 , its cheaper
+        newCollectionIndex = newCollectionIndex + 1; // @audit GO use +=1 , its cheaper
     }
 
     // function to add/modify the additional data of a collection
     // once a collection is created and total supply is set it cannot be changed
     // only _collectionArtistAddress , _maxCollectionPurchases can change after total supply is set
+    // @audit Med if collectionTotalSupply is set to 0 initally , this function can be called afterwards to change the data anyway that a person can think of 
     function setCollectionData(uint256 _collectionID, address _collectionArtistAddress, uint256 _maxCollectionPurchases, uint256 _collectionTotalSupply, uint _setFinalSupplyTimeAfterMint) public CollectionAdminRequired(_collectionID, this.setCollectionData.selector) {
         require((isCollectionCreated[_collectionID] == true) && (collectionFreeze[_collectionID] == false) && (_collectionTotalSupply <= 10000000000), "err/freezed"); // @audit NC split these into multiple require as they have the same revert that doesnt cater to the other conditions 
         if (collectionAdditionalData[_collectionID].collectionTotalSupply == 0) {
@@ -167,6 +169,7 @@ contract NextGenCore is ERC721Enumerable, Ownable, ERC2981 {
 
     function addRandomizer(uint256 _collectionID, address _randomizerContract) public FunctionAdminRequired(this.addRandomizer.selector) {
         require(IRandomizer(_randomizerContract).isRandomizerContract() == true, "Contract is not Randomizer");
+        // @audit NC why is the randomizerContract addres saved twice ?? 
         collectionAdditionalData[_collectionID].randomizerContract = _randomizerContract;
         collectionAdditionalData[_collectionID].randomizer = IRandomizer(_randomizerContract);
     }
@@ -234,6 +237,7 @@ contract NextGenCore is ERC721Enumerable, Ownable, ERC2981 {
     // function to update Collection Info
     // @audit Low Risk where is this checked 
     /**If index is equal to a value that is within the indices range of the collectionScript the function updates that single part of the script. */
+    //
     function updateCollectionInfo(uint256 _collectionID, string memory _newCollectionName, string memory _newCollectionArtist, string memory _newCollectionDescription, string memory _newCollectionWebsite, string memory _newCollectionLicense, string memory _newCollectionBaseURI, string memory _newCollectionLibrary, uint256 _index, string[] memory _newCollectionScript) public CollectionAdminRequired(_collectionID, this.updateCollectionInfo.selector) {
         require((isCollectionCreated[_collectionID] == true) && (collectionFreeze[_collectionID] == false), "Not allowed");
          if (_index == 1000) {
