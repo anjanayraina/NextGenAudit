@@ -7,6 +7,10 @@
  *  @version: 10.28
  *  @author: 6529 team
  */
+
+// @audit "The total Supply remains unchangeable and can only be reduce to match the existing minted supply after minting is completed."
+// this is written in the docs, although it cant be changed directly , it can be indirectly 
+
 // @audit The admin contract is NextGenAdmins.sol
 pragma solidity ^0.8.19;
 
@@ -142,7 +146,7 @@ contract NextGenCore is ERC721Enumerable, Ownable, ERC2981 {
         isCollectionCreated[newCollectionIndex] = true;
         newCollectionIndex = newCollectionIndex + 1; // @audit GO use +=1 , its cheaper
     }
-
+    // @audit natspec is not followed in the docs 
     // function to add/modify the additional data of a collection
     // once a collection is created and total supply is set it cannot be changed
     // only _collectionArtistAddress , _maxCollectionPurchases can change after total supply is set
@@ -171,8 +175,9 @@ contract NextGenCore is ERC721Enumerable, Ownable, ERC2981 {
     // Add Randomizer contract on collection
 
     function addRandomizer(uint256 _collectionID, address _randomizerContract) public FunctionAdminRequired(this.addRandomizer.selector) {
-        require(IRandomizer(_randomizerContract).isRandomizerContract() == true, "Contract is not Randomizer");
+        require(IRandomizer(_randomizerContract).isRandomizerContract() == true, "Contract is not Randomizer"); //  @audit NC this check is redundent as the call would fail anyways if the function is randomizercontract is not there in the address 
         // @audit NC why is the randomizerContract addres saved twice ?? 
+        // a trade off happens here for the gas space cost that took in storing same address twice and the readability of the contract 
         collectionAdditionalData[_collectionID].randomizerContract = _randomizerContract;
         collectionAdditionalData[_collectionID].randomizer = IRandomizer(_randomizerContract);
     }
