@@ -183,6 +183,7 @@ contract NextGenCore is ERC721Enumerable, Ownable, ERC2981 {
     }
 
     // airdrop called from minterContract
+    // @audit look at them after going over the mintercontract 
     
     function airDropTokens(uint256 mintIndex, address _recipient, string memory _tokenData, uint256 _saltfun_o, uint256 _collectionID) external {
         require(msg.sender == minterContract, "Caller is not the Minter Contract");
@@ -212,7 +213,7 @@ contract NextGenCore is ERC721Enumerable, Ownable, ERC2981 {
 
     function burn(uint256 _collectionID, uint256 _tokenId) public {
         require(_isApprovedOrOwner(_msgSender(), _tokenId), "ERC721: caller is not token owner or approved");
-        require ((_tokenId >= collectionAdditionalData[_collectionID].reservedMinTokensIndex) && (_tokenId <= collectionAdditionalData[_collectionID].reservedMaxTokensIndex), "id err");
+        require ((_tokenId >= collectionAdditionalData[_collectionID].reservedMinTokensIndex) && (_tokenId <= collectionAdditionalData[_collectionID].reservedMaxTokensIndex), "id err"); 
         _burn(_tokenId);
         burnAmount[_collectionID] = burnAmount[_collectionID] + 1;
     }
@@ -316,7 +317,7 @@ contract NextGenCore is ERC721Enumerable, Ownable, ERC2981 {
     // set final supply
 
     function setFinalSupply(uint256 _collectionID) public FunctionAdminRequired(this.setFinalSupply.selector) {
-        require (block.timestamp > IMinterContract(minterContract).getEndTime(_collectionID) + collectionAdditionalData[_collectionID].setFinalSupplyTimeAfterMint, "Time has not passed");
+        require (block.timestamp > IMinterContract(minterContract).getEndTime(_collectionID) + collectionAdditionalData[_collectionID].setFinalSupplyTimeAfterMint, "Time has not passed"); // @audit this check prevents the function admin from correcting the totalSupply after it has been altered by the setCollection function 
         collectionAdditionalData[_collectionID].collectionTotalSupply = collectionAdditionalData[_collectionID].collectionCirculationSupply;
         collectionAdditionalData[_collectionID].reservedMaxTokensIndex = (_collectionID * 10000000000) + collectionAdditionalData[_collectionID].collectionTotalSupply - 1;
     }
