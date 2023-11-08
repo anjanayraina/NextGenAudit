@@ -1,0 +1,1 @@
+Take a detailed look at the core contract and find out the vurnerabilities it might have 

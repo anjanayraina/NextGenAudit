@@ -18,7 +18,10 @@ import "./IRandomizer.sol";
 import "./INextGenAdmins.sol";
 import "./IMinterContract.sol";
 import "./ERC2981.sol";
-
+// @audit To Check - no withdraw function to take out any tokens that got into the contract by mistake 
+// no pause function 
+// no events in the contract 
+// its prone to DOS 
 contract NextGenCore is ERC721Enumerable, Ownable, ERC2981 {
     using Strings for uint256;
 
