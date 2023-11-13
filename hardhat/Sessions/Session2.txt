@@ -1,3 +1,3 @@
 Take a look at the core contract 
 
-Findings : 
+Findings: setCollection function has a way to make the changes to the content event after setting the collection data . This comes as a medium vurnerability 
